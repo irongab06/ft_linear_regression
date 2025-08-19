@@ -163,3 +163,7 @@ def rmse(y, pred):
 ## Set of Mathematical Formulas and Programming
 
 ![linear Regression](Formule-math.jpg)![linear Regression](Formule-for-code.jpg)
+
+## Auteur
+Gabriel Cavalier  
+[Mon GitHub](https://github.com/irongab06)
