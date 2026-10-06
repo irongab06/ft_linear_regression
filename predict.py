@@ -7,6 +7,13 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 
 
+def print_box(text, color):
+	"""Print text inside a box whose width follows the text length."""
+	inner = f"   {text}   "
+	print(f"{color}╔{'═' * len(inner)}╗{RESET}")
+	print(f"{color}║{inner}║{RESET}")
+	print(f"{color}╚{'═' * len(inner)}╝{RESET}")
+
 def load_theta(path="theta.txt"):
 	"""Return (theta0, theta1) saved by train.py, or (0, 0) if no training has been done yet."""
 	try:
@@ -31,9 +38,7 @@ try:
 	while (True) :
 		try :
 			if i == 0 :
-				print(f"{CYAN}{BOLD}╔══════════════════════════════╗{RESET}")
-				print(f"{CYAN}{BOLD}║          Input (km)          ║{RESET}")
-				print(f"{CYAN}{BOLD}╚══════════════════════════════╝{RESET}")
+				print_box("Input (km)", f"{CYAN}{BOLD}")
 				if theta0 == 0 and theta1 == 0 :
 					print(f"{YELLOW}⚠️  No training found (theta.txt): prediction will be 0{RESET}")
 			prompt = input(f"➡️  {YELLOW}Enter mileage (in km) or {RESET}{RED}EXIT {RESET}{YELLOW}for quit : {RESET}")
@@ -41,32 +46,27 @@ try:
 				print("\033c", end="")
 				break
 			mileage = float(prompt)
-			if mileage < 0 or mileage != mileage :
+			if not (0 <= mileage < float("inf")) :  # rejects negative, nan and inf
 				print("\033c", end="")
 				i = 1
-				print(f"{RED}╔══════════════════════════════════════╗{RESET}")
-				print(f"{RED}║   Please enter a positive number     ║{RESET}")
-				print(f"{RED}╚══════════════════════════════════════╝{RESET}\n")
+				print_box("Please enter a positive number", RED)
+				print()
 				continue
 			price = estimate_price(mileage, theta0, theta1)
 			if price < 0 :
 				print("\033c", end="")
 				i = 1
-				print(f"{RED}╔════════════════════════╗{RESET}")
-				print(f"{RED}║   Mileage too high     ║{RESET}")
-				print(f"{RED}╚════════════════════════╝{RESET}\n")
+				print_box("Mileage too high", RED)
+				print()
 				continue
 			print("\033c", end="")
 			i = 0
-			print(f"{GREEN}╔══════════════════════════════════════════╗{RESET}")
-			print(f"{GREEN}║      Estimated price: {price:.2f} euros      ║{RESET}")
-			print(f"{GREEN}╚══════════════════════════════════════════╝{RESET}")
+			print_box(f"Estimated price: {price:.2f} euros", GREEN)
 		except ValueError:
 			i = 1
 			print("\033c", end="")
-			print(f"{RED}╔══════════════════════════════════════╗{RESET}")
-			print(f"{RED}║     Please enter a valid number      ║{RESET}")
-			print(f"{RED}╚══════════════════════════════════════╝{RESET}\n")
+			print_box("Please enter a valid number", RED)
+			print()
 
 except (KeyboardInterrupt, EOFError):
 	print("\033c", end="")
