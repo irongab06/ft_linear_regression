@@ -1,10 +1,22 @@
 # ft_linear_regression
 
-42School Project: Implement a simple linear regression with gradigradientnt descent
+42School Project: Implement a simple linear regression with gradient descent
 
 ## Objective 
 
 Prediction of car price based on mileage using a linear regression
+
+## Usage
+
+```bash
+python3 train.py     # reads data.csv, trains the model, saves theta.txt and the graphs
+python3 predict.py   # asks for a mileage and prints the estimated price
+```
+
+The whole algorithm is written in pure Python (standard library only: `csv`, `math`, `sys`).  
+`matplotlib` is only used by `train.py` to draw the bonus graphs.
+
+If `predict.py` is run before `train.py`, no `theta.txt` exists yet: θ₀ and θ₁ are set to 0 and the prediction is 0.
 
 ## Introduction
 
@@ -23,15 +35,35 @@ F(x) = ax + b
 ### Function Model in python
 
 ```python
-def model(X, theta) :
-	return X.dot(theta)
+def estimate_price(mileage, theta0, theta1):
+	return theta0 + (theta1 * mileage)
 ```
 
-This is a matrix-vector product:
+This is exactly the formula of the subject: **estimatePrice(mileage) = θ₀ + (θ₁ * mileage)**
 
-<u>**X**</u> -> matrix of shape **(m, 2)**, containing each sample **[x, 1]** (1 is for the bias term)  
-<u>**theta**</u> -> parameter vector **[θ₁, θ₀]** (slope and intercept)  
-<u>**X.dot(theta)**</u> -> computes the linear model ax + b for all samples  
+<u>**mileage**</u> → independent variable **x** (car mileage)  
+<u>**theta0**</u> → intercept **θ₀** (price when the mileage is 0)  
+<u>**theta1**</u> → slope **θ₁** (price variation for one more unit of mileage)  
+<u>**theta0 + (theta1 * mileage)**</u> → the linear model **ax + b**  
+
+## Normalization
+
+Mileages are large numbers (up to 250 000 km). With raw values the gradient of θ₁ is huge and gradient descent diverges.  
+`train.py` therefore divides every mileage by `SCALE = 10000` before training:
+
+```python
+SCALE = 10000
+x = [k / SCALE for k in km]
+```
+
+At the end of training, θ₁ is divided by `SCALE` before being saved, so that `predict.py` works directly on the raw mileage:
+
+```python
+with open("theta.txt", "w") as f:
+	f.write(f"{theta0}\n{theta1 / SCALE}\n")
+```
+
+`theta.txt` contains **θ₀** on the first line and **θ₁** on the second line.
 
 ## Cost Function
 
@@ -51,20 +83,18 @@ J(θ) = 1 / 2m * ​i=1 ∑ m ​( f( x(i) ) − y(i) )2
 this function name is **Mean Squared Error** (MSE)
 
 ```python
-def cost_function(y, X, theta) :
-	m = len(y)
-	return 1 / (2*m) * np.sum((model(X, theta) - y) ** 2)
+def cost_function(x, y, theta0, theta1):
+	m = len(x)
+	return sum((estimate_price(x[i], theta0, theta1) - y[i]) ** 2 for i in range(m)) / (2 * m)
 ```
 
-<u>**m**</u> → total number of samples (length of vector y)  
-<u>**y**</u> → vector containing all real values (true prices of the samples)  
-<u>**X**</u> → matrix of shape **(m, 2)**, containing each sample **[x, 1]** (1 is for the bias term)  
-<u>**theta**</u> → vector of model parameters **[θ₀, θ₁]** (intercept and slope)  
-<u>**model**(X, theta)</u> → linear regression model used to make predictions  
-<u>**(model(X, theta) - y)**</u> → vector of errors (difference between predicted price and real price)  
-<u>**(model(X, theta) - y)²**</u> → squared errors, penalizing large deviations  
-<u>**np.sum(...)**</u> → sum of all squared errors over the dataset  
-<u>**1 / (2*m)**</u> → normalization factor (divide by the number of samples, and the 2 simplifies derivative calculation for a descent)  
+<u>**m**</u> → total number of samples (length of the list x)  
+<u>**x**</u> → list containing all the (normalized) mileages  
+<u>**y**</u> → list containing all real values (true prices of the samples)  
+<u>**estimate_price(x[i], theta0, theta1) - y[i]**</u> → error for sample **i** (difference between predicted price and real price)  
+<u>**(...)²**</u> → squared error, penalizing large deviations  
+<u>**sum(... for i in range(m))**</u> → sum of all squared errors over the dataset  
+<u>**/ (2 * m)**</u> → normalization factor (divide by the number of samples, and the 2 simplifies derivative calculation for the descent)  
 
 ## Algorithms of Minimization
 
@@ -73,19 +103,15 @@ It is very important for completing the linear regression process in machine lea
 
 ### Gradient 
 
-represente derivee of cost function ,this objectiv is determinate direction up or down cost function for the little cost
+The gradient is the derivative of the cost function with respect to each parameter. It gives the direction in which **θ₀** and **θ₁** must move to decrease the cost.  
+For a linear model, the two partial derivatives are the two formulas given in the subject:
 
-```python
-def grad(X, y, theta) :
-	m = len(y)
-	return 1/m * X.T.dot(model(X, theta) - y)
-```
-<u>**m**</u> -> m is the total number of samples **y**  
-<u>**X**</u> -> matrix of shape **(m, 2)**, containing each sample **[x, 1]** (1 is for the bias term)  
-<u>**X.T**</u> → **.T** is used to transpose the matrix **X** (required for the derivative algorithm in gradient computation).  
-<u>**model(X, theta)**</u> → this is the linear regression model used to make predictions.  
-<u>**y**</u> -> vector containing all real values (true prices of the samples)  
-<u>**(model(X, theta) - y)**</u> -> vector of errors (difference between predicted price and real price)
+tmpθ₀ = learningRate * 1/m * ​i=0 ∑ m-1 ( estimatePrice(mileage[i]) − price[i] )  
+tmpθ₁ = learningRate * 1/m * ​i=0 ∑ m-1 ( estimatePrice(mileage[i]) − price[i] ) * mileage[i]  
+
+<u>**estimatePrice(mileage[i]) − price[i]**</u> → error of the model for sample **i**  
+<u>**1/m * ∑**</u> → mean of the errors (for **θ₀**), or mean of the errors weighted by the mileage (for **θ₁**)  
+<u>**learningRate**</u> → step size of the update  
 
 ### Gradient descent 
 
@@ -93,38 +119,47 @@ its purpose is to update the parameters in the opposite direction of the gradien
 
 
 ```python
-def gradient_descent(X, y, theta, learning_rate, n_iterations) :
-	cost_history = np.zeros(n_iterations)
-	for i in range(0, n_iterations) :
-		theta = theta - learning_rate * grad(X, y, theta)
-		cost_history[i] = cost_function(y, X, theta)
-	return theta, cost_history
+def gradient_descent(x, y, learning_rate, n_iterations):
+	m = len(x)
+	theta0, theta1 = 0.0, 0.0
+	cost_history = []
+	for _ in range(n_iterations):
+		errors = [estimate_price(x[i], theta0, theta1) - y[i] for i in range(m)]
+		tmp_theta0 = learning_rate * sum(errors) / m
+		tmp_theta1 = learning_rate * sum(errors[i] * x[i] for i in range(m)) / m
+		theta0 = theta0 - tmp_theta0
+		theta1 = theta1 - tmp_theta1
+		cost_history.append(cost_function(x, y, theta0, theta1))
+	return theta0, theta1, cost_history
 ```
 
 
-<u>**theta**</u> → vector of model parameters **[θ₀, θ₁]**(intercept and slope), updated at each iteration  
-<u>**grad(X, y, theta)**</u> → gradient vector (derivative of the cost function with respect to the parameters), indicating the direction of the steepest increase of the cost  
-<u>**learning_rate**</u> → hyperparameter that controls the step size of the update (too large → divergence, too small → slow learning)  
-<u>**learning_rate * grad(X, y, theta)**</u> → step size in the gradient direction  
-<u>**theta - ...**</u> → parameter update in the opposite direction of the gradient (because the goal is to minimize the cost function, not maximize it)  
+<u>**theta0, theta1 = 0.0, 0.0**</u> → the parameters start at zero  
+<u>**errors**</u> → list of errors (predicted price − real price), computed once per iteration with the current **θ₀** and **θ₁**  
+<u>**tmp_theta0 / tmp_theta1**</u> → the two update steps of the subject, stored in temporary variables  
+<u>**theta0 = theta0 - tmp_theta0**</u> and <u>**theta1 = theta1 - tmp_theta1**</u> → simultaneous update: both temporaries are computed from the same old values before either parameter is changed. The subtraction moves the parameters in the opposite direction of the gradient (because the goal is to minimize the cost function, not maximize it)  
+<u>**learning_rate**</u> → hyperparameter that controls the step size of the update (too large → divergence, too small → slow learning). Here **0.01**  
+<u>**n_iterations**</u> → number of passes over the data. Here **2000**  
+<u>**cost_history**</u> → cost after each iteration, used to draw the loss curve  
 
 ## Coefficient of determination
 
 The coefficient of determination **(R²)** is a value between 0 and 1 that measures how well the model predicts the target variable.  
 
 ```python
-def coef_determination(y, pred) : 
-	u = ((y - pred)**2).sum()
-	v = ((y - y.mean())**2).sum()
-	return 1 - u/v
+def coef_determination(y, pred):
+	mean_y = sum(y) / len(y)
+	u = sum((y[i] - pred[i]) ** 2 for i in range(len(y)))
+	v = sum((yi - mean_y) ** 2 for yi in y)
+	return 1 - u / v
 ```
 
-<u>**y**</u> → vector of shape **(m, 1)**, containing the true values (real prices).  
-<u>**pred**</u> → vector of shape (m, 1), containing the predicted values by the model.  
-<u>**(y - pred)**</u> → vector of residuals (errors between real and predicted values).  
-<u>**((y - pred)²).sum()**</u> → **SSR** (Sum of Squared Residuals), total squared error of the model.  
-<u>**y.mean()**</u> → mean of the real values (average price).  
-<u>**((y - y.mean())²).sum()**</u> → **SST** (Total Sum of Squares), variance of the data relative to the mean.  
+<u>**y**</u> → list of the true values (real prices).  
+<u>**pred**</u> → list of the values predicted by the model.  
+<u>**mean_y**</u> → mean of the real values (average price).  
+<u>**(y[i] - pred[i])**</u> → residual (error between real and predicted value).  
+<u>**u**</u> → **SSR** (Sum of Squared Residuals), total squared error of the model.  
+<u>**v**</u> → **SST** (Total Sum of Squares), variance of the data relative to the mean.  
 <u>**1 - u/v**</u> → formula of the coefficient of determination **(R²)**. It measures the proportion of the variance in y explained by the model (between **0** and **1**).  
 
 ## Root Mean Squared Error (RMSE)
@@ -133,15 +168,14 @@ It is an evaluation metric that measures the typical average deviation between t
 
 ```python
 def rmse(y, pred):
-    return np.sqrt(np.mean((y - pred)**2))
+	return math.sqrt(sum((y[i] - pred[i]) ** 2 for i in range(len(y))) / len(y))
 ```
 
-<u>**y**</u> → vector of shape **(m, 1)**, containing the true values (real prices).  
-<u>**pred**</u> → vector of shape **(m, 1)**, containing the predicted values by the model.  
-<u>**(y - pred)**</u> → vector of residuals (errors between real and predicted values).  
-<u>**(y - pred)²**</u> → squares of the residuals (large errors are penalized more strongly).  
-<u>**np.mean((y - pred)²)**</u> → **MSE** (Mean Squared Error), average squared error of the predictions.  
-<u>**np.sqrt(...)**</u> → square root of the MSE, which brings the error back to the same unit as y (for example, euros).  
+<u>**y**</u> → list of the true values (real prices).  
+<u>**pred**</u> → list of the values predicted by the model.  
+<u>**(y[i] - pred[i])²**</u> → squared residual (large errors are penalized more strongly).  
+<u>**sum(...) / len(y)**</u> → **MSE** (Mean Squared Error), average squared error of the predictions.  
+<u>**math.sqrt(...)**</u> → square root of the MSE, which brings the error back to the same unit as y (for example, euros).  
 
 ![linear Regression](Linear_Regression.png)
 
@@ -154,11 +188,13 @@ def rmse(y, pred):
 <u>**SST (Total Sum of Squares)**</u> -> Total variance of the data relative to the mean of **y**.  
 <u>**θ₀ (theta0)**</u> -> Intercept or bias (predicted value when **x = 0**).  
 <u>**θ₁ (theta1)**</u> -> Slope or weight (impact of the variable **x** on **y**).  
-<u>**X.T (Transpose)**</u> -> Transpose of the matrix **X**.  
 <u>**J(θ) (Cost Function)**</u> -> Function measuring the error of the model (sum of squared errors).  
 <u>**Learning rate (α)**</u> -> Hyperparameter that controls the step size in gradient descent updates.  
 <u>**Gradient**</u> -> Vector of partial derivatives of the cost function with respect to the parameters (direction of steepest increase).  
 <u>**Epoch / Iteration**</u> -> One complete update step of the parameters during gradient descent.  
+<u>**Simultaneous update**</u> -> **θ₀** and **θ₁** are both computed from the same old values (temporary variables) before being assigned.  
+<u>**Normalization (SCALE)**</u> -> Mileages are divided by 10000 during training so that gradient descent converges; **θ₁** is divided back before saving.  
+<u>**Over-fitting**</u> -> When a model fits the training data too closely (including its noise) and predicts new data poorly. A prediction that falls exactly on a training value is suspicious.  
 
 ## Set of Mathematical Formulas and Programming
 
