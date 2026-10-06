@@ -6,15 +6,25 @@ Projet 42 : implémenter une simple régression linéaire avec descente de gradi
 
 Prédire le prix d’une voiture à partir du kilométrage grâce à une régression linéaire.
 
+## Installation
+
+L’algorithme lui-même n’utilise que la bibliothèque standard de Python (`csv`, `math`, `sys`) : `predict.py` tourne avec n’importe quel Python 3 et n’a besoin de rien.  
+`matplotlib` est la seule dépendance externe, utilisée par `train.py` pour tracer les graphes bonus. La façon recommandée de l’installer est un environnement virtuel :
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Si `matplotlib` n’est pas installé, `train.py` entraîne quand même le modèle et sauvegarde `theta.txt`, il saute seulement les graphes.
+
 ## Utilisation
 
 ```bash
 python3 train.py     # lit data.csv, entraîne le modèle, sauvegarde theta.txt et les graphes
 python3 predict.py   # demande un kilométrage et affiche le prix estimé
 ```
-
-Tout l’algorithme est écrit en Python pur (bibliothèque standard uniquement : `csv`, `math`, `sys`).  
-`matplotlib` n’est utilisé que par `train.py` pour tracer les graphes bonus.
 
 Si `predict.py` est lancé avant `train.py`, le fichier `theta.txt` n’existe pas encore : θ₀ et θ₁ valent 0 et la prédiction est 0.
 

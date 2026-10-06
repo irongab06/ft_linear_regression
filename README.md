@@ -6,15 +6,25 @@
 
 Prediction of car price based on mileage using a linear regression
 
+## Installation
+
+The algorithm itself only uses the Python standard library (`csv`, `math`, `sys`): `predict.py` runs with any Python 3 and needs nothing.  
+`matplotlib` is the only external dependency, used by `train.py` to draw the bonus graphs. The recommended way to install it is a virtual environment:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+If `matplotlib` is not installed, `train.py` still trains the model and saves `theta.txt`, it only skips the graphs.
+
 ## Usage
 
 ```bash
 python3 train.py     # reads data.csv, trains the model, saves theta.txt and the graphs
 python3 predict.py   # asks for a mileage and prints the estimated price
 ```
-
-The whole algorithm is written in pure Python (standard library only: `csv`, `math`, `sys`).  
-`matplotlib` is only used by `train.py` to draw the bonus graphs.
 
 If `predict.py` is run before `train.py`, no `theta.txt` exists yet: θ₀ and θ₁ are set to 0 and the prediction is 0.
 

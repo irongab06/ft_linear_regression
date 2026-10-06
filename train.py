@@ -1,7 +1,10 @@
 import csv
 import math
 import sys
-import matplotlib.pyplot as plt
+try:
+	import matplotlib.pyplot as plt
+except ImportError:
+	plt = None  # graphs are a bonus: training must work without matplotlib
 
 # Couleurs ANSI
 RED = "\033[91m"
@@ -131,6 +134,10 @@ print(f"{YELLOW}{determination:.2f}{RESET}\n")
 # ============================
 # 6) Graphs
 # ============================
+
+if plt is None:
+	print(f"{YELLOW}matplotlib is not installed: graphs skipped (pip install -r requirements.txt){RESET}")
+	sys.exit(0)
 
 plt.figure("Graph – Linear Regression", figsize=(10,9))
 
